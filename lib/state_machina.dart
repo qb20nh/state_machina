@@ -1,16 +1,26 @@
 typedef StateTransitionMap<S, E> = Map<S, Map<E, S>>;
+typedef StateTransitionListener<S, E> = Function(
+    S current, S previous, E eventId);
 
 /// A simple state machine class that allows easily creating a FSM based on a state map and optional initial state, validating the correctness of both, and handles events, updating the current state per the state map.
 class StateMachine<S, E> {
   /// The current state
-  late S current;
+  late S _current;
+
+  S get current => _current;
+
+  /// Throws [UnsupportedError] if you try to set the current state directly.
+  /// Use [send] to send an event to the state machine.
+  set current(S newState) => throw UnsupportedError(
+      'Cannot set current state directly. Use send() to send an event to the state machine.');
+  Iterable<E> get possibleEvents => _stateMap[_current]!.keys;
 
   late final StateTransitionMap<S, E> _stateMap;
   final Set<S> _stateKeys = {};
   final Set<S> _stateValues = {};
   final Set<E> _eventIds = {};
 
-  final List<Function> _listeners = [];
+  final List<StateTransitionListener<S, E>> _listeners = [];
 
   /// Returns a finite state machine based on [stateMap] and optional [initialState].
   ///
@@ -26,13 +36,13 @@ class StateMachine<S, E> {
     _stateMap = stateMap;
 
     if (initialState == null) {
-      current = _stateMap.keys.first;
+      _current = _stateMap.keys.first;
     } else {
       if (!_stateKeys.contains(initialState)) {
         throw ArgumentError("No state exists for initialState $initialState");
       }
 
-      current = initialState;
+      _current = initialState;
     }
 
     for (final stateName in _stateKeys.skip(1)) {
@@ -53,31 +63,31 @@ class StateMachine<S, E> {
   /// Sends [eventId] into the state machine and optionally transitions to the next state based on the state map.
   ///
   /// Throws [ArgumentError] if [eventId] is not found in [stateMap].
-  void send(final eventId) {
+  void send(E eventId) {
     if (!_eventIds.contains(eventId)) {
       throw ArgumentError(
           'Received an unknown event: $eventId. Only events present in the state map may be sent.');
     }
 
-    final previous = current;
+    final previous = _current;
 
-    if (_stateMap[current]!.isNotEmpty) {
-      current = _stateMap[current]![eventId]!;
+    if (_stateMap[_current]!.isNotEmpty) {
+      _current = _stateMap[_current]![eventId]!;
     }
 
     for (final func in _listeners) {
-      func(current, previous, eventId);
+      func(_current, previous, eventId);
     }
   }
 
   /// Register a listener to be called after each send is resolved
   /// Listener is called with listener(current, previous, event)
-  void addListener(Function(S current, S previous, E event) listener) {
+  void addListener(StateTransitionListener<S, E> listener) {
     _listeners.add(listener);
   }
 
   /// Remove a previously registered closure from the list of listeners
-  void removeListener(Function(S current, S previous, E event) listener) {
+  void removeListener(StateTransitionListener<S, E> listener) {
     _listeners.remove(listener);
   }
 }

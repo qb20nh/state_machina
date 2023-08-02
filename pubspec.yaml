@@ -2,7 +2,7 @@ name: state_machina
 description: An incredibly simple state machine library for Flutter and other Dart applications.
 homepage: https://github.com/granmoe/state_machina
 
-version: 3.0.0
+version: 3.1.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

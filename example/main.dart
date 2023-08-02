@@ -1,6 +1,7 @@
 import 'package:state_machina/state_machina.dart';
 
 enum States { editingEmail, sendingEmail, success, error }
+
 enum Events { editEmail, sendEmail, sentEmail, failedToSendEmail }
 
 var stateMap = {

@@ -11,9 +11,10 @@ import 'package:state_machina/state_machina.dart';
 // }
 
 enum States { editingEmail, sendingEmail, success, error }
+
 enum Events { editEmail, sendEmail, sentEmail, failedToSendEmail }
 
-var stateMap = {
+final stateMap = {
   States.editingEmail: {Events.sendEmail: States.sendingEmail},
   States.sendingEmail: {
     Events.sentEmail: States.success,
@@ -28,7 +29,7 @@ void main() {
     test(
         'Returns a StateMachine with initial state defaulted to first stateMap entry when initialState is not passed',
         () {
-      var state = StateMachine(stateMap);
+      final state = StateMachine(stateMap);
 
       expect(state.current, equals(States.editingEmail));
     });
@@ -36,7 +37,7 @@ void main() {
     test(
         'Returns a StateMachine with initial state set to the initialState when initialState is passed',
         () {
-      var state = StateMachine(stateMap, States.sendingEmail);
+      final state = StateMachine(stateMap, States.sendingEmail);
 
       expect(state.current, equals(States.sendingEmail));
     });
@@ -135,21 +136,28 @@ void main() {
 
   group('Changing state', () {
     test('Changes to a valid next state', () {
-      var state = StateMachine(stateMap);
+      final state = StateMachine(stateMap);
 
       state.send(Events.sendEmail);
 
       expect(state.current, equals(States.sendingEmail));
     });
 
-    test('Throws an error when an unknown event is sent', () {
-      var state = StateMachine(stateMap);
+    test('Throws an error when state is set manually', () {
+      final state = StateMachine(stateMap);
 
+      expect(() => state.current = States.sendingEmail, throwsUnsupportedError);
+    });
+
+    test('Throws an error when an unknown event is sent', () {
+      final state = StateMachine(stateMap);
+
+      // This is a syntax error with generics
       expect(() => state.send('this does not exist'), throwsArgumentError);
     });
 
     test('Cannot change from a terminal state once it is reached', () {
-      var state = StateMachine({
+      final state = StateMachine({
         'start': {'some-event': 'end'},
         'end': {}
       });
@@ -163,15 +171,16 @@ void main() {
   });
 
   test('Can add and remove listeners', () {
-    var state = StateMachine({
+    final state = StateMachine({
       'on': {'toggle': 'off'},
       'off': {'toggle': 'on'}
     });
 
     int calls1 = 0;
-    var listener1 = (current, _previous, _event) {
+    listener1(current, previous, eventId) {
       calls1++;
-    };
+    }
+
     state.addListener(listener1);
 
     state.send('toggle');
@@ -179,9 +188,9 @@ void main() {
     expect(calls1, equals(1));
 
     int calls2 = 0;
-    var listener2 = (current, _previous, _event) {
+    listener2(current, previous, eventId) {
       calls2++;
-    };
+    }
 
     state.addListener(listener2);
 
